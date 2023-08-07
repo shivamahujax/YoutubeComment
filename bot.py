@@ -25,6 +25,7 @@ import csv
 PROXY = "3.88.169.225:80"
 
 
+api_key = "AIzaSyDacb2_5wFLEPOANAsqk6fS0Rosw8lH6qk"
 
 
 
@@ -127,41 +128,34 @@ def get_youtube_video_id(url):
         return None
 
 
+def get_channel_id(video_id):
+    url = f"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={video_id}&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if 'items' in data and len(data['items']) > 0:
+            return data['items'][0]['snippet']['channelId']
+    return None
+   
 
-
+def get_channel_name_by_id(channel_id):
+    url = f"https://www.googleapis.com/youtube/v3/channels?part=snippet&id={channel_id}&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if 'items' in data and len(data['items']) > 0:
+            return data['items'][0]['snippet']['title']
+    return None
 
 def get_youtube_url(video_id):
     return f"https://www.youtube.com/watch?v={video_id}"
 
 
 def getCommentsFromLink(youtube_id):
-    url = "http://Carl.eba-jmdzx9r2.us-east-1.elasticbeanstalk.com/getVideoChapters"
-    payload = {
-    "youtubeUrl": youtube_id
-    }
-    response = requests.post(url, json=payload)
-    if response.status_code == 200:
-        data = response.json()
-        comment = "Auto-chapters powered by usecarl.com\n" + data['response']
-        return(comment)
-    else:
-        print("Request failed with status code:", response.status_code)
-
-
-def getLatestVideos(Channel_id):
-    url = "http://Carl.eba-jmdzx9r2.us-east-1.elasticbeanstalk.com/get_videos"
-    payload = {
-        "channel_id": Channel_id
-    }
-    response = requests.post(url, json=payload)
-    if response.status_code == 200:
-        data = response.json()
-        l = [] 
-        for i in data:
-            l.append(i['id']['videoId'])
-        return l
-    else:
-        print("Request failed with status code:", response.status_code)
+    channel_id = get_channel_id(youtube_id)
+    name = get_channel_name_by_id(channel_id)
+    comment = "Hi " + name + " Hope You are doing good, This message is just to tell you that you are doing an awsome job."
+    return(comment)
 
 
 # running bot------------------------------------------------------------------------------------
@@ -176,26 +170,23 @@ if __name__ == '__main__':
         print(password)
         driver1 = youtube_login(email, password)
         driver.append(driver1)
-
+    
     with open('data2.csv', 'r') as file:
         reader = csv.reader(file)
         for row in reader:
             print(row[0])
-            # break
             cd = cd%k
             workingDriver = driver[cd]
-            videoList = getLatestVideos(row[0])
-            print(videoList)
-            for i in videoList:
-                comment = getCommentsFromLink(i)
-                print(comment)
-                video_url = get_youtube_url(i)
-                gotolink(workingDriver, video_url)
-                comment_page(workingDriver, comment)
+            vidId = get_youtube_video_id(row[0])
+            print(vidId)
+            comment = getCommentsFromLink(vidId)
+            print(comment)
+            gotolink(workingDriver, row[0])
+            comment_page(workingDriver, comment)
             cd = cd+1
             
     
 
-   
+
     
     
